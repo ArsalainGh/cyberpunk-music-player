@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEØNWAVE // Cyberpunk Music Player</title>
+
+    <!-- Fonts: Orbitron (display) + Share Tech Mono (body/readouts) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- jsmediatags: ID3 / MP4 / FLAC metadata extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.7/jsmediatags.min.js"></script>
+  </head>
+  <body>
+    <!-- CRT scanline + vignette overlays -->
+    <div class="scanlines" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+
+    <div id="app" class="app">
+      <!-- ===================== HEADER ===================== -->
+      <header class="app-header">
+        <div class="logo">
+          <span class="logo-glyph">▮▮</span>
+          <h1 class="logo-text">NE<span class="logo-o">Ø</span>NWAVE</h1>
+          <span class="logo-sub">// AUDIO.SYS v2.077</span>
+        </div>
+        <div class="header-actions">
+          <span id="library-stats" class="library-stats"></span>
+          <button id="btn-load-folder" class="cyber-btn" title="Load a music folder">
+            <svg viewBox="0 0 24 24" class="icon"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+            LOAD FOLDER
+          </button>
+        </div>
+      </header>
+
+      <!-- ===================== VISUALIZER ===================== -->
+      <section class="visualizer-panel" aria-label="Audio visualizer">
+        <canvas id="visualizer"></canvas>
+        <div class="visualizer-hud">
+          <span id="hud-status" class="hud-item">■ STANDBY</span>
+          <span class="hud-item hud-right">FFT::512 // 64CH</span>
+        </div>
+      </section>
+
+      <!-- ===================== MAIN ===================== -->
+      <main class="main-grid">
+        <!-- Now playing -->
+        <section class="panel now-playing" aria-label="Now playing">
+          <h2 class="panel-title">◢ NOW PLAYING</h2>
+          <div class="art-wrap">
+            <div class="art-frame" id="art-frame">
+              <img id="np-art" alt="Album art" draggable="false" />
+              <div class="art-ring"></div>
+            </div>
+          </div>
+          <div class="np-meta">
+            <div class="np-title-clip"><span id="np-title" class="np-title">NO SIGNAL</span></div>
+            <div id="np-artist" class="np-artist">— awaiting input —</div>
+            <div id="np-album" class="np-album"></div>
+          </div>
+        </section>
+
+        <!-- Track list -->
+        <section class="panel tracklist-panel" aria-label="Track list">
+          <div class="tracklist-toolbar">
+            <div class="search-wrap">
+              <svg viewBox="0 0 24 24" class="icon search-icon"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="1.8"/></svg>
+              <input id="search-input" class="search-input" type="text" placeholder="SEARCH TRACKS..." autocomplete="off" spellcheck="false" />
+            </div>
+            <select id="sort-select" class="sort-select" title="Sort order">
+              <option value="added-desc">DATE ▼ NEWEST</option>
+              <option value="added-asc">DATE ▲ OLDEST</option>
+              <option value="title-asc">TITLE A→Z</option>
+              <option value="title-desc">TITLE Z→A</option>
+              <option value="artist-asc">ARTIST A→Z</option>
+              <option value="artist-desc">ARTIST Z→A</option>
+              <option value="duration-asc">LENGTH ▲</option>
+              <option value="duration-desc">LENGTH ▼</option>
+            </select>
+          </div>
+
+          <div id="track-list" class="track-list">
+            <!-- Empty state / loader zone -->
+            <div id="empty-state" class="empty-state">
+              <div class="empty-glyph">⟁</div>
+              <p class="empty-title">NO AUDIO DATA LOADED</p>
+              <p class="empty-hint">Select a folder on your machine, or drag &amp; drop files / folders anywhere on this page.</p>
+              <div class="empty-actions">
+                <button id="btn-pick-dir" class="cyber-btn primary">◢ SELECT FOLDER</button>
+                <label class="cyber-btn ghost" for="file-input">◢ FALLBACK: BROWSE FILES</label>
+              </div>
+              <p class="empty-formats">mp3 / wav / ogg / flac / aac / m4a</p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- ===================== CONTROLS ===================== -->
+      <footer class="controls-bar panel">
+        <div class="controls-left">
+          <button id="btn-shuffle" class="icon-btn toggle" title="Shuffle [S]">
+            <svg viewBox="0 0 24 24" class="icon"><path d="M3 7h4l4 5m0 0 4 5h4m0 0-2-2m2 2-2 2M3 17h4l2-2.5M15 7h6m0 0-2-2m2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button id="btn-prev" class="icon-btn" title="Previous [←]">
+            <svg viewBox="0 0 24 24" class="icon"><path d="M6 5v14M19 5l-9 7 9 7V5z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+          </button>
+          <button id="btn-play" class="icon-btn play-btn" title="Play/Pause [Space]">
+            <svg id="icon-play" viewBox="0 0 24 24" class="icon"><path d="M7 4.5 20 12 7 19.5v-15z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+            <svg id="icon-pause" viewBox="0 0 24 24" class="icon hidden"><path d="M7 4h3.4v16H7zM13.6 4H17v16h-3.4z" fill="currentColor"/></svg>
+          </button>
+          <button id="btn-next" class="icon-btn" title="Next [→]">
+            <svg viewBox="0 0 24 24" class="icon"><path d="M18 5v14M5 5l9 7-9 7V5z" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+          </button>
+          <button id="btn-repeat" class="icon-btn toggle" title="Repeat [R]">
+            <svg viewBox="0 0 24 24" class="icon"><path d="M17 3l3 3-3 3M20 6H7a4 4 0 0 0-4 4v1M7 21l-3-3 3-3M4 18h13a4 4 0 0 0 4-4v-1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="repeat-one-badge" class="repeat-badge hidden">1</span>
+          </button>
+        </div>
+
+        <div class="controls-center">
+          <span id="time-current" class="time-readout">00:00</span>
+          <div id="seek-bar" class="seek-bar" title="Seek">
+            <div class="seek-track">
+              <div id="seek-fill" class="seek-fill"></div>
+              <div id="seek-handle" class="seek-handle"></div>
+            </div>
+          </div>
+          <span id="time-total" class="time-readout">00:00</span>
+        </div>
+
+        <div class="controls-right">
+          <button id="btn-mute" class="icon-btn" title="Mute [M]">
+            <svg viewBox="0 0 24 24" class="icon">
+              <path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/>
+              <g id="vol-waves" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+                <path id="vol-w1" d="M15.5 9.5a4 4 0 0 1 0 5"/>
+                <path id="vol-w2" d="M17.8 7.5a7 7 0 0 1 0 9"/>
+              </g>
+              <path id="vol-x" d="M16 9.5l5 5m0-5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" class="hidden"/>
+            </svg>
+          </button>
+          <input id="volume-slider" class="volume-slider" type="range" min="0" max="100" value="80" title="Volume [↑/↓]" />
+        </div>
+      </footer>
+    </div>
+
+    <!-- Global drag & drop overlay -->
+    <div id="drop-overlay" class="drop-overlay hidden">
+      <div class="drop-box">
+        <div class="drop-glyph">⇩</div>
+        <p>DROP AUDIO FILES / FOLDERS TO UPLOAD</p>
+      </div>
+    </div>
+
+    <!-- Toast notifications -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Fallback directory input -->
+    <input id="file-input" type="file" webkitdirectory multiple class="hidden-input" />
+
+    <script type="module" src="/src/js/app.js"></script>
+  </body>
+</html>
