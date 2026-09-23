@@ -1,4 +1,5 @@
 # NEØNWAVE // Cyberpunk Music Player
+![Sreenshoot](./Screenshot.png)
 
 A single-page, browser-based music player with a cyberpunk/neon aesthetic and a
 real-time **CAVA-style audio visualizer** — 64 reactive frequency bars with neon
